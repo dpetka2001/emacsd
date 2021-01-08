@@ -19,8 +19,13 @@
   :ensure t)
 
 ;; Set default dir and custom file
-(setq default-directory "~/.emacs.d/")
-(setq custom-file "~/.emacs.d/emacs-custom.el")
+(if (eq system-type 'windows-nt)
+    (progn 
+      (setq default-directory "C:/Users/jrn23/AppData/Roaming/.emacs.d/")
+      (setq custom-file "C:/Users/jrn23/AppData/Roaming/.emacs.d/emacs-custom.el")
+      (setq user-emacs-directory "C:/Users/jrn23/AppData/Roaming/.emacs.d/"))
+    )
+
 (load custom-file)
 
 ;; Dirs for local package install
