@@ -1,14 +1,43 @@
 #+PROPERTY: header-args  :tangle "settings.el"
 
-* Emacs environment
-** Packages sources
+* TOC
+:PROPERTIES:
+:TOC:      :include all :depth 5 :ignore (this)
+:END:
+:CONTENTS:
+- [[#emacs-environment][Emacs environment]]
+    - [[#packages-sources][Packages sources]]
+    - [[#use-package-config][Use-package config]]
+    - [[#environment][Environment]]
+      - [[#initialization][Initialization]]
+      - [[#setup-facesthemes][Setup faces/themes]]
+      - [[#configure-parenthesesbraces][Configure parentheses/braces]]
+      - [[#keyboard-shortcuts][Keyboard shortcuts]]
+      - [[#aliases][Aliases]]
+  - [[#package-setup][Package setup]]
+    - [[#misc][Misc]]
+      - [[#automatic-update-packages][Automatic Update Packages]]
+      - [[#configure-org][Configure Org]]
+      - [[#move-lines][Move Lines]]
+      - [[#ivy-and-derivatives][Ivy and derivatives]]
+      - [[#benchmark-init][Benchmark-init]]
+      - [[#auto-completion][Auto-Completion]]
+    - [[#programming][Programming]]
+      - [[#magit][Magit]]
+      - [[#lsp][LSP]]
+      - [[#python][Python]]
+:END:
+
+
+** Emacs environment
+*** Packages sources
 #+begin_src emacs-lisp
    (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                             ("melpa" . "http://melpa.org/packages/")
                             ("org" . "http://orgmode.org/elpa/")))
 #+end_src
 
-** Use-package config
+*** Use-package config
 #+begin_src emacs-lisp
    ;; use-package initialization
    ;; install use-package if not already done
@@ -27,8 +56,8 @@
      :ensure t)
 #+end_src
    
-** Environment
-*** Initialization
+*** Environment
+**** Initialization
 #+begin_src emacs-lisp
    ;; Set default dir and custom file
    (if (eq system-type 'windows-nt)
@@ -54,7 +83,7 @@
    (column-number-mode t)
 #+end_src
 
-*** Setup faces/themes
+**** Setup faces/themes
 #+begin_src emacs-lisp
    ;; you won't need any of the bar thingies
    ;; turn it off to save screen estate
@@ -72,13 +101,13 @@
    (size-indication-mode t)
 #+end_src
 
-*** Configure parentheses/braces
+**** Configure parentheses/braces
 #+begin_src emacs-lisp
    (show-paren-mode 1)
    (electric-pair-mode 1)
 #+end_src
    
-*** Keyboard shortcuts
+**** Keyboard shortcuts
 #+begin_src emacs-lisp
    ;; Number keys to open file lists
    (recentf-mode 1)
@@ -96,7 +125,7 @@
      )
 #+end_src
 
-*** Aliases
+**** Aliases
 #+begin_src emacs-lisp
    ;; y or n is enough
    (defalias 'yes-or-no-p 'y-or-n-p)
@@ -104,12 +133,12 @@
    (defalias 'lp 'package-list-packages)
 #+end_src
 
-* Package setup
+** Package setup
 
-** Misc
-*** Automatic Update Packages
+*** Misc
+**** Automatic Update Packages
 
-*** Configure Org
+**** Configure Org
 #+begin_src emacs-lisp
    (use-package org
      :ensure t
@@ -124,7 +153,7 @@
        (setq org-src-window-setup 'split-window-below)
        ;; Disable symbol's `<' pairing for electric pairing in org mode locally
        (add-hook 'org-mode-hook
-          (lambda ()
+       (lambda ()
             (setq-local electric-pair-inhibit-predicate
                `(lambda (c)
                   (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c)))))
@@ -134,7 +163,7 @@
 
 
 
-*** Move Lines
+**** Move Lines
 #+begin_src emacs-lisp
    ;; Package to move around lines/regions
    (use-package move-lines
@@ -144,7 +173,7 @@
      )
 #+end_src
 
-*** Ivy and derivatives
+**** Ivy and derivatives
 #+begin_src emacs-lisp
    (use-package counsel
      :ensure t
@@ -162,15 +191,14 @@
      :config (ivy-mode))
 
    (use-package ivy-rich
-     :ensure t
-     :after ivy
-     :custom
-     (ivy-virtual-abbreviate 'full
-                             ivy-rich-switch-buffer-align-virtual-buffer t
-                             ivy-rich-path-style 'abbrev)
+     :hook (ivy-mode . ivy-rich-mode)
+     :custom (ivy-rich-path-style 'abbrev)
      :config
-     (ivy-set-display-transformer 'ivy-switch-buffer
-                                  'ivy-rich-switch-buffer-transformer))
+     (ivy-rich-modify-columns
+      'ivy-switch-buffer
+      '((ivy-rich-switch-buffer-size (:align right))
+        (ivy-rich-switch-buffer-major-mode (:width 20 :face error))))
+     )
 
    (use-package swiper
      :after ivy
@@ -178,7 +206,7 @@
      ("C-r" . swiper)))
 #+end_src
 
-*** Benchmark-init
+**** Benchmark-init
 #+begin_src emacs-lisp
    (use-package benchmark-init
      :ensure t
@@ -187,12 +215,38 @@
      (add-hook 'after-init-hook 'benchmark-init/deactivate)
      )
 #+end_src
-** Programming
-*** Magit
+
+**** Auto-Completion
+#+begin_src emacs-lisp
+   (use-package company
+     :ensure t
+     :defer 0.5
+     :delight
+     :custom
+     (company-begin-commands '(self-insert-command))
+     (company-idle-delay 0)
+     (company-minimum-prefix-length 2)
+     (company-show-numbers t)
+     (company-tooltip-align-annotations 't)
+     (global-company-mode t)
+     )
+
+   ;; A company front-end with icons
+   (use-package company-box
+     :ensure t
+     :after company
+     :delight
+     :hook (company-mode . company-box-mode)
+     )
+#+end_src
+
+*** Programming
+**** Magit
 #+begin_src emacs-lisp
    (use-package magit
      :ensure t
-     :bind (("C-x g s" . magit-status))
+     :bind (("C-x g s" . magit-status)
+            ("C-x g m" . magit-branch-manager))
      :config
      (set-default 'magit-stage-all-confirm nil)
      (add-hook 'magit-mode-hook 'magit-load-config-extensions)
@@ -212,5 +266,110 @@
      ;; (global-set-key (kbd "C-x g s") 'magit-status)
      ;; (global-set-key (kbd "C-x g r") 'magit-reflog)
      ;; (global-set-key (kbd "C-x g t") 'magit-tag)
+     )
+#+end_src
+
+**** LSP
+In order to be able to use different LSP (Language Server Protocol) server according to the programming language that we want to use, we need a 
+client for LSP. That’s where lsp-mode comes in!
+
+#+begin_src emacs-lisp
+   (use-package lsp-mode
+     :ensure t
+     :hook ((c-mode c++-mode dart-mode java-mode json-mode python-mode typescript-mode xml-mode) . lsp)
+     :custom
+     (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
+     (lsp-enable-folding nil)
+     (lsp-enable-links nil)
+     (lsp-enable-snippet nil)
+     (lsp-prefer-flymake nil)
+     (lsp-session-file (expand-file-name (format "%s/emacs/lsp-session-v1" xdg-data)))
+     (lsp-restart 'auto-restart)
+     )
+
+   (use-package lsp-ui
+     :ensure t
+     )
+
+   (use-package dap-mode
+     :ensure t
+     :after lsp-mode
+     :config
+     (dap-mode t)
+     (dap-ui-mode t)
+     )
+#+end_src
+
+Another benefit of using LSP to configure the management of your programming language is that LSP servers are also used by other text editors. This, 
+increasing contributions to these packages.
+
+**** Python
+#+begin_src emacs-lisp
+   (use-package lsp-pyright
+     :if (executable-find "pyright")
+     :hook (python-mode . (lambda ()
+                            (require 'lsp-pyright)
+                            (lsp)))
+     )
+
+   (use-package lsp-python-ms
+     :defer 0.3
+     :custom (lsp-python-ms-auto-install-server t)
+     )
+
+   (use-package python
+     :delight "π "
+     :bind (("M-[" . python-nav-backward-block)
+            ("M-]" . python-nav-forward-block))
+     :preface
+     (defun python-remove-unused-imports()
+       "Removes unused imports and unused variables with autoflake."
+       (interactive)
+       (if (executable-find "autoflake")
+           (progn
+             (shell-command (format "autoflake --remove-all-unused-imports -i %s"
+                                    (shell-quote-argument (buffer-file-name))))
+             (revert-buffer t t t))
+         (warn "python-mode: Cannot find autoflake executable.")))
+     )
+
+   (use-package pyenv-mode
+     :after python
+     :hook ((python-mode . pyenv-mode)
+            (projectile-switch-project . projectile-pyenv-mode-set))
+     :custom (pyenv-mode-set "3.8.5")
+     :preface
+     (defun projectile-pyenv-mode-set ()
+       "Set pyenv version matching project name."
+       (let ((project (projectile-project-name)))
+         (if (member project (pyenv-mode-versions))
+             (pyenv-mode-set project)
+           (pyenv-mode-unset))))
+     )
+
+   (use-package pyvenv
+     :after python
+     :hook ((python-mode . pyvenv-mode)
+            (python-mode . (lambda ()
+                             (if-let ((pyvenv-directory (find-pyvenv-directory (buffer-file-name))))
+                                 (pyvenv-activate pyvenv-directory))
+                             (lsp))))
+     :custom
+     (pyvenv-default-virtual-env-name "env")
+     (pyvenv-mode-line-indicator '(pyvenv-virtual-env-name ("[venv:"
+                                                            pyvenv-virtual-env-name "]")))
+     :preface
+     (defun find-pyvenv-directory (path)
+       "Checks if a pyvenv directory exists."
+       (cond
+        ((not path) nil)
+        ((file-regular-p path) (find-pyvenv-directory (file-name-directory path)))
+        ((file-directory-p path)
+         (or
+          (seq-find
+           (lambda (path) (file-regular-p (expand-file-name "pyvenv.cfg" path)))
+           (directory-files path t))
+          (let ((parent (file-name-directory (directory-file-name path))))
+            (unless (equal parent path) (find-pyvenv-directory parent)))))))
      )
 #+end_src

@@ -92,7 +92,7 @@
     (setq org-src-window-setup 'split-window-below)
     ;; Disable symbol's `<' pairing for electric pairing in org mode locally
     (add-hook 'org-mode-hook
-       (lambda ()
+    (lambda ()
          (setq-local electric-pair-inhibit-predicate
             `(lambda (c)
                (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c)))))
@@ -122,15 +122,14 @@
   :config (ivy-mode))
 
 (use-package ivy-rich
-  :ensure t
-  :after ivy
-  :custom
-  (ivy-virtual-abbreviate 'full
-                          ivy-rich-switch-buffer-align-virtual-buffer t
-                          ivy-rich-path-style 'abbrev)
+  :hook (ivy-mode . ivy-rich-mode)
+  :custom (ivy-rich-path-style 'abbrev)
   :config
-  (ivy-set-display-transformer 'ivy-switch-buffer
-                               'ivy-rich-switch-buffer-transformer))
+  (ivy-rich-modify-columns
+   'ivy-switch-buffer
+   '((ivy-rich-switch-buffer-size (:align right))
+     (ivy-rich-switch-buffer-major-mode (:width 20 :face error))))
+  )
 
 (use-package swiper
   :after ivy
@@ -144,9 +143,31 @@
   (add-hook 'after-init-hook 'benchmark-init/deactivate)
   )
 
+(use-package company
+  :ensure t
+  :defer 0.5
+  :delight
+  :custom
+  (company-begin-commands '(self-insert-command))
+  (company-idle-delay 0)
+  (company-minimum-prefix-length 2)
+  (company-show-numbers t)
+  (company-tooltip-align-annotations 't)
+  (global-company-mode t)
+  )
+
+;; A company front-end with icons
+(use-package company-box
+  :ensure t
+  :after company
+  :delight
+  :hook (company-mode . company-box-mode)
+  )
+
 (use-package magit
   :ensure t
-  :bind (("C-x g s" . magit-status))
+  :bind (("C-x g s" . magit-status)
+         ("C-x g m" . magit-branch-manager))
   :config
   (set-default 'magit-stage-all-confirm nil)
   (add-hook 'magit-mode-hook 'magit-load-config-extensions)
@@ -166,4 +187,97 @@
   ;; (global-set-key (kbd "C-x g s") 'magit-status)
   ;; (global-set-key (kbd "C-x g r") 'magit-reflog)
   ;; (global-set-key (kbd "C-x g t") 'magit-tag)
+  )
+
+(use-package lsp-mode
+  :ensure t
+  :hook ((c-mode c++-mode dart-mode java-mode json-mode python-mode typescript-mode xml-mode) . lsp)
+  :custom
+  (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
+  (lsp-enable-folding nil)
+  (lsp-enable-links nil)
+  (lsp-enable-snippet nil)
+  (lsp-prefer-flymake nil)
+  (lsp-session-file (expand-file-name (format "%s/emacs/lsp-session-v1" xdg-data)))
+  (lsp-restart 'auto-restart)
+  )
+
+(use-package lsp-ui
+  :ensure t
+  )
+
+(use-package dap-mode
+  :ensure t
+  :after lsp-mode
+  :config
+  (dap-mode t)
+  (dap-ui-mode t)
+  )
+
+(use-package lsp-pyright
+  :if (executable-find "pyright")
+  :hook (python-mode . (lambda ()
+                         (require 'lsp-pyright)
+                         (lsp)))
+  )
+
+(use-package lsp-python-ms
+  :defer 0.3
+  :custom (lsp-python-ms-auto-install-server t)
+  )
+
+(use-package python
+  :delight "π "
+  :bind (("M-[" . python-nav-backward-block)
+         ("M-]" . python-nav-forward-block))
+  :preface
+  (defun python-remove-unused-imports()
+    "Removes unused imports and unused variables with autoflake."
+    (interactive)
+    (if (executable-find "autoflake")
+        (progn
+          (shell-command (format "autoflake --remove-all-unused-imports -i %s"
+                                 (shell-quote-argument (buffer-file-name))))
+          (revert-buffer t t t))
+      (warn "python-mode: Cannot find autoflake executable.")))
+  )
+
+(use-package pyenv-mode
+  :after python
+  :hook ((python-mode . pyenv-mode)
+         (projectile-switch-project . projectile-pyenv-mode-set))
+  :custom (pyenv-mode-set "3.8.5")
+  :preface
+  (defun projectile-pyenv-mode-set ()
+    "Set pyenv version matching project name."
+    (let ((project (projectile-project-name)))
+      (if (member project (pyenv-mode-versions))
+          (pyenv-mode-set project)
+        (pyenv-mode-unset))))
+  )
+
+(use-package pyvenv
+  :after python
+  :hook ((python-mode . pyvenv-mode)
+         (python-mode . (lambda ()
+                          (if-let ((pyvenv-directory (find-pyvenv-directory (buffer-file-name))))
+                              (pyvenv-activate pyvenv-directory))
+                          (lsp))))
+  :custom
+  (pyvenv-default-virtual-env-name "env")
+  (pyvenv-mode-line-indicator '(pyvenv-virtual-env-name ("[venv:"
+                                                         pyvenv-virtual-env-name "]")))
+  :preface
+  (defun find-pyvenv-directory (path)
+    "Checks if a pyvenv directory exists."
+    (cond
+     ((not path) nil)
+     ((file-regular-p path) (find-pyvenv-directory (file-name-directory path)))
+     ((file-directory-p path)
+      (or
+       (seq-find
+        (lambda (path) (file-regular-p (expand-file-name "pyvenv.cfg" path)))
+        (directory-files path t))
+       (let ((parent (file-name-directory (directory-file-name path))))
+         (unless (equal parent path) (find-pyvenv-directory parent)))))))
   )
