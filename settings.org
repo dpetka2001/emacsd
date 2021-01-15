@@ -1,6 +1,6 @@
 #+PROPERTY: header-args  :tangle "settings.el"
 
-* TOC
+* Jrn23's emacs literal config
 :PROPERTIES:
 :TOC:      :include all :depth 5 :ignore (this)
 :END:
