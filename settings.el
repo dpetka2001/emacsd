@@ -56,6 +56,16 @@
 ;; set the file size indication to true
 (size-indication-mode t)
 
+(when (display-graphic-p)
+  (use-package abyss-theme
+    :ensure t
+    :config
+    (load-theme #'abyss t)
+    )
+  (use-package color-theme-modern
+    :ensure t)
+  )
+
 (show-paren-mode 1)
 (electric-pair-mode 1)
 
@@ -71,7 +81,7 @@
     (("M-0" . window-number-switch)
       )
   :config
-    (window-number-mode 1)
+  (window-number-mode 1)
   )
 
 ;; y or n is enough
@@ -79,11 +89,24 @@
 (defalias 'eb 'eval-buffer)
 (defalias 'lp 'package-list-packages)
 
+(use-package helpful
+  :ensure t
+  :bind
+  (("C-h k" . helpful-key)
+   ("C-h c" . helpful-command)
+   ("C-x C-d" . helpful-at-point)
+   )
+  :config
+  (setq counsel-describe-function-function #'helpful-callable)
+  (setq counsel-describe-variable-function #'helpful-variable)
+  )
+
 (use-package org
   :ensure t
   :bind (("C-c a" . org-agenda)
     )
-  :config 
+  :config
+    ;; Package required for expanding snippets to code block structures
     (use-package org-tempo)
     (setq org-startup-folded nil)
     (setq org-indent-mode-turns-on-hiding-stars nil)
@@ -101,7 +124,7 @@
 
 ;; Package to move around lines/regions
 (use-package move-lines
-  :ensure nil
+  :ensure nil           ;; Local package in `lisp'
   :config
   (move-lines-binding)
   )
@@ -109,7 +132,12 @@
 (use-package counsel
   :ensure t
   :after ivy
-  :config (counsel-mode))
+  :config (counsel-mode)
+  ;; install smex to use under the hood to display most recently used command history
+  (use-package smex
+    :ensure t
+    )
+  )
 
 (use-package ivy
   :ensure t
@@ -119,7 +147,11 @@
   :custom
   (ivy-count-format "(%d/%d) ")
   (ivy-use-virtual-buffers t)
-  :config (ivy-mode))
+  :config
+    (ivy-mode)
+    ;; Disable counsel-M-x to start with "^"
+    (setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
+  )
 
 (use-package ivy-rich
   :hook (ivy-mode . ivy-rich-mode)
@@ -139,8 +171,8 @@
 (use-package benchmark-init
   :ensure t
   :config
-  ;; disable collection of data after init is done
-  (add-hook 'after-init-hook 'benchmark-init/deactivate)
+  ;; To disable collection of benchmark data after init is done.
+  ;;(add-hook 'after-init-hook 'benchmark-init/deactivate)
   )
 
 (use-package company
@@ -153,7 +185,8 @@
   (company-minimum-prefix-length 2)
   (company-show-numbers t)
   (company-tooltip-align-annotations 't)
-  (global-company-mode t)
+  ;; Disable company-mode from running in ivy-mode and window-number-mode
+  (company-global-modes '(not ivy-mode window-number-mode))
   )
 
 ;; A company front-end with icons
@@ -177,16 +210,6 @@
     (window-configuration-to-register :magit-fullscreen)
     ad-do-it
     (delete-other-windows))
-
-  ;; (global-unset-key (kbd "C-x g"))
-  ;; (global-set-key (kbd "C-x g h") 'magit-log)
-  ;; (global-set-key (kbd "C-x g f") 'magit-file-log)
-  ;; (global-set-key (kbd "C-x g b") 'magit-blame-mode)
-  ;; (global-set-key (kbd "C-x g m") 'magit-branch-manager)
-  ;; (global-set-key (kbd "C-x g c") 'magit-branch)
-  ;; (global-set-key (kbd "C-x g s") 'magit-status)
-  ;; (global-set-key (kbd "C-x g r") 'magit-reflog)
-  ;; (global-set-key (kbd "C-x g t") 'magit-tag)
   )
 
 (use-package lsp-mode
@@ -204,6 +227,7 @@
 
 (use-package lsp-ui
   :ensure t
+  :after lsp-mode
   )
 
 (use-package dap-mode
@@ -215,6 +239,7 @@
   )
 
 (use-package lsp-pyright
+  :ensure t
   :if (executable-find "pyright")
   :hook (python-mode . (lambda ()
                          (require 'lsp-pyright)
@@ -222,6 +247,7 @@
   )
 
 (use-package lsp-python-ms
+  :ensure t
   :defer 0.3
   :custom (lsp-python-ms-auto-install-server t)
   )
@@ -243,6 +269,7 @@
   )
 
 (use-package pyenv-mode
+  :ensure t
   :after python
   :hook ((python-mode . pyenv-mode)
          (projectile-switch-project . projectile-pyenv-mode-set))
@@ -257,6 +284,7 @@
   )
 
 (use-package pyvenv
+  :ensure t
   :after python
   :hook ((python-mode . pyvenv-mode)
          (python-mode . (lambda ()
