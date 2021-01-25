@@ -2,7 +2,6 @@
                          ("melpa" . "http://melpa.org/packages/")
                          ("org" . "http://orgmode.org/elpa/")))
 
-;; use-package initialization
 ;; install use-package if not already done
 (if (not (package-installed-p 'use-package))
     (progn
@@ -10,10 +9,8 @@
       (package-install 'use-package)))
 ;; use-package for all others
 (require 'use-package)
-
 ;; use-package verbose output
 (setq use-package-verbose t)
-
 ;; Delight package to hide/abbreviate modes in modeline
 (use-package delight
   :ensure t)
@@ -41,7 +38,7 @@
 (global-linum-mode t)
 (column-number-mode t)
 
-;; you won't need any of the bar thingies
+;; You won't need any of the bar thingies,
 ;; turn it off to save screen estate
 (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
@@ -50,12 +47,13 @@
       scroll-conservatively 100000
       scroll-preserve-screen-position 1)
 
-;; the blinking cursor is nothing, but an annoyance
+;; The blinking cursor is nothing, but an annoyance
 (blink-cursor-mode -1)
 
-;; set the file size indication to true
+;; Set the file size indication to true
 (size-indication-mode t)
 
+;; Themes configuration
 (when (display-graphic-p)
   (use-package abyss-theme
     :ensure t
@@ -77,11 +75,12 @@
 ;; Package to show number of window and switch to window according to number
 (use-package window-number
   :ensure t
+  :commands window-number-switch
   :bind
     (("M-0" . window-number-switch)
       )
-  :config
-  (window-number-mode 1)
+  ;; :config
+  ;; (window-number-mode 1)
   )
 
 ;; y or n is enough
@@ -110,7 +109,10 @@
     (use-package org-tempo)
     (setq org-startup-folded nil)
     (setq org-indent-mode-turns-on-hiding-stars nil)
+    ;; Set the value to `nil', so that org does not load unnecessary modules that increase start up time
+    (setq org-modules nil)
     (add-hook 'org-mode-hook 'org-indent-mode)
+    ;; (delight 'org-indent-mode "" 'org-indent)
     (setq org-edit-src-content-indentation 3)
     (setq org-src-window-setup 'split-window-below)
     ;; Disable symbol's `<' pairing for electric pairing in org mode locally
@@ -124,16 +126,22 @@
 
 ;; Package to move around lines/regions
 (use-package move-lines
-  :ensure nil           ;; Local package in `lisp'
+  :ensure nil           ;; Local package in `/lisp' directory
   :config
   (move-lines-binding)
   )
 
 (use-package counsel
   :ensure t
+  :delight
   :after ivy
-  :config (counsel-mode)
-  ;; install smex to use under the hood to display most recently used command history
+  :config
+  (counsel-mode)
+
+  ;; Disable `describe-bindings' remap
+  (define-key counsel-mode-map [remap describe-bindings] nil)
+
+  ;; Install smex to use under the hood to display most recently used command history
   (use-package smex
     :ensure t
     )
@@ -141,6 +149,7 @@
 
 (use-package ivy
   :ensure t
+  :delight
   :defer 0.1
   :bind (("C-c C-r" . ivy-resume)
          ("C-x B" . ivy-switch-buffer-other-window))
@@ -178,7 +187,7 @@
 (use-package company
   :ensure t
   :defer 0.5
-  :delight
+  ;;:delight
   :custom
   (company-begin-commands '(self-insert-command))
   (company-idle-delay 0)
@@ -187,6 +196,8 @@
   (company-tooltip-align-annotations 't)
   ;; Disable company-mode from running in ivy-mode and window-number-mode
   (company-global-modes '(not ivy-mode window-number-mode))
+  :config
+  (global-company-mode t)
   )
 
 ;; A company front-end with icons

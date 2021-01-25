@@ -13,7 +13,7 @@
 
 (if (file-exists-p (expand-file-name "settings.el" user-emacs-directory))
     (load-file (expand-file-name "settings.el" user-emacs-directory))
-  ;;(org-babel-load-file (expand-file-name "settings.org" user-emacs-directory))
+  (org-babel-load-file (expand-file-name "settings.org" user-emacs-directory))
   )
 
 ;; Make gc pauses faster by decreasing the threshold.
