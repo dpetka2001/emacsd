@@ -1,6 +1,7 @@
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                          ("melpa" . "http://melpa.org/packages/")
                          ("org" . "http://orgmode.org/elpa/")))
+(package-refresh-contents t)
 
 ;; install use-package if not already done
 (if (not (package-installed-p 'use-package))
@@ -196,8 +197,6 @@
   (company-tooltip-align-annotations 't)
   ;; Disable company-mode from running in ivy-mode and window-number-mode
   (company-global-modes '(not ivy-mode window-number-mode))
-  :config
-  (global-company-mode t)
   )
 
 ;; A company front-end with icons
@@ -319,4 +318,27 @@
         (directory-files path t))
        (let ((parent (file-name-directory (directory-file-name path))))
          (unless (equal parent path) (find-pyvenv-directory parent)))))))
+  )
+
+(use-package projectile
+  :ensure t
+  :init
+  (projectile-mode 1)
+  :delight '(:eval (concat " [" (projectile-project-name) "]"))
+  :bind (:map projectile-mode-map
+              ;; Set the prefix so that keybindings are available
+              ("C-c p" . projectile-command-map)      
+              ("C-c p f" . projectile-find-file)
+              ("C-c p p" . projectile-switch-project)
+              ("C-c p m" . projectile-commander))
+  :config
+  (use-package counsel-projectile
+    :ensure t
+    :after projectile
+    :config
+    (counsel-projectile-mode 1)
+    )
+  (setq projectile-completion-system 'ivy)
+  (setq projectile-enable-caching t) ; Enable cache
+  (setq projectile-switch-project-action 'counsel-projectile)
   )
