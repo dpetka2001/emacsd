@@ -1,7 +1,8 @@
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                          ("melpa" . "http://melpa.org/packages/")
                          ("org" . "http://orgmode.org/elpa/")))
-(package-refresh-contents t)
+(unless package-archive-contents
+  (package-refresh-contents t))
 
 ;; install use-package if not already done
 (if (not (package-installed-p 'use-package))
@@ -132,22 +133,6 @@
   (move-lines-binding)
   )
 
-(use-package counsel
-  :ensure t
-  :delight
-  :after ivy
-  :config
-  (counsel-mode)
-
-  ;; Disable `describe-bindings' remap
-  (define-key counsel-mode-map [remap describe-bindings] nil)
-
-  ;; Install smex to use under the hood to display most recently used command history
-  (use-package smex
-    :ensure t
-    )
-  )
-
 (use-package ivy
   :ensure t
   :delight
@@ -159,8 +144,6 @@
   (ivy-use-virtual-buffers t)
   :config
     (ivy-mode)
-    ;; Disable counsel-M-x to start with "^"
-    (setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
   )
 
 (use-package ivy-rich
@@ -173,10 +156,29 @@
      (ivy-rich-switch-buffer-major-mode (:width 20 :face error))))
   )
 
-(use-package swiper
+(use-package counsel
+  :ensure t
+  :delight
   :after ivy
+  :config
+  (counsel-mode)
+  ;; Disable `describe-bindings' remap
+  (define-key counsel-mode-map [remap describe-bindings] nil)
+
+  ;; Install smex to use under the hood to display most recently used command history
+  (use-package smex
+    :ensure t
+    )
+  )
+
+(use-package swiper
+  :after (ivy counsel)
   :bind (("C-s" . swiper)
-  ("C-r" . swiper)))
+         ("C-r" . swiper))
+  :config
+  ;; Disable counsel-M-x to start with "^"
+  (setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
+  )
 
 (use-package benchmark-init
   :ensure t
