@@ -1,6 +1,11 @@
+(require 'package)
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                          ("melpa" . "http://melpa.org/packages/")
                          ("org" . "http://orgmode.org/elpa/")))
+;; Instead load them explicitly.
+;; This must be initialized after `package-archives' is set in order to read all 
+;; the archives and set `package-archive-contents' correctly.
+(package-initialize)
 (unless package-archive-contents
   (package-refresh-contents t))
 
@@ -66,6 +71,13 @@
     :ensure t)
   )
 
+;; Modelines
+(use-package powerline
+  :ensure t
+  :config
+  (powerline-center-theme)
+  )
+
 (show-paren-mode 1)
 (electric-pair-mode 1)
 
@@ -123,7 +135,12 @@
          (setq-local electric-pair-inhibit-predicate
             `(lambda (c)
                (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c)))))
-       )
+    )
+    (defun uptime()
+      (float-time
+       (time-subtract (current-time) emacs-start-time))
+      )
+    (message "Emacs started in %.3fs" (uptime))
   )
 
 ;; Package to move around lines/regions
@@ -178,13 +195,6 @@
   :config
   ;; Disable counsel-M-x to start with "^"
   (setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
-  )
-
-(use-package benchmark-init
-  :ensure t
-  :config
-  ;; To disable collection of benchmark data after init is done.
-  ;;(add-hook 'after-init-hook 'benchmark-init/deactivate)
   )
 
 (use-package company
