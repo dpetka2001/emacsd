@@ -14,4 +14,8 @@
 ;; Make gc pauses faster by decreasing the threshold.
 (setq gc-cons-threshold (* 10 1000 1000))
 
-
+(defun uptime()
+  (float-time
+   (time-subtract (current-time) emacs-start-time))
+  )
+(message "Emacs started in %.3fs" (uptime))

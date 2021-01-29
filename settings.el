@@ -12,7 +12,8 @@
 ;; install use-package if not already done
 (if (not (package-installed-p 'use-package))
     (progn
-      (package-refresh-contents)
+      (unless package-archive-contents
+        (package-refresh-contents t))
       (package-install 'use-package)))
 ;; use-package for all others
 (require 'use-package)
@@ -39,7 +40,19 @@
 (setq inhibit-startup-screen t)
 
 ;; Save session/buffers
-(desktop-save-mode 1)
+;; Enable desktop-save-mode only when the first frame has come up.
+;; This prevents Emacs from stalling when run as a daemon.
+(add-hook 'server-after-make-frame-hook
+     (lambda ()
+       (progn
+       (if (desktop-save-mode nil)
+           (desktop-save-mode 1))
+       (if (daemonp) (setq desktop-restore-frames nil))
+       (desktop-read)
+       (load-theme #'abyss t)
+         )
+       )
+     )
 
 ;; show line numbers
 (global-linum-mode t)
@@ -136,11 +149,7 @@
             `(lambda (c)
                (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c)))))
     )
-    (defun uptime()
-      (float-time
-       (time-subtract (current-time) emacs-start-time))
-      )
-    (message "Emacs started in %.3fs" (uptime))
+
   )
 
 ;; Package to move around lines/regions
@@ -170,7 +179,8 @@
   (ivy-rich-modify-columns
    'ivy-switch-buffer
    '((ivy-rich-switch-buffer-size (:align right))
-     (ivy-rich-switch-buffer-major-mode (:width 20 :face error))))
+     (ivy-rich-switch-buffer-major-mode (:width 20 :face error)))
+     )
   )
 
 (use-package counsel
