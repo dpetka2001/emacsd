@@ -26,10 +26,14 @@
 ;; Set default dir and custom file
 (if (eq system-type 'windows-nt)
     (progn 
-      (setq default-directory "C:/Users/jrn23/AppData/Roaming/.emacs.d/")
-      (setq custom-file "C:/Users/jrn23/AppData/Roaming/.emacs.d/emacs-custom.el")
-      (setq user-emacs-directory "C:/Users/jrn23/AppData/Roaming/.emacs.d/"))
-    )
+      (setq default-directory     "C:/Users/jrn23/AppData/Roaming/.emacs.d/")
+      (setq custom-file           "C:/Users/jrn23/AppData/Roaming/.emacs.d/emacs-custom.el")
+      (setq user-emacs-directory  "C:/Users/jrn23/AppData/Roaming/.emacs.d/"))
+      else 
+      (setq default-directory     "~/.emacs.d/")
+      (setq custom-file           "~/.emacs.d/emacs-custom.el")
+      (setq user-emacs-directory  "~/.emacs.d/")
+      )
 
 (load custom-file)
 
@@ -49,6 +53,7 @@
            (desktop-save-mode 1))
        (if (daemonp) (setq desktop-restore-frames nil))
        (desktop-read)
+       ;; Load theme here as well for when emacs is started as daemon
        (load-theme #'abyss t)
          )
        )
@@ -134,10 +139,10 @@
   :config
     ;; Package required for expanding snippets to code block structures
     (use-package org-tempo)
-    (setq org-startup-folded nil)
-    (setq org-indent-mode-turns-on-hiding-stars nil)
     ;; Set the value to `nil', so that org does not load unnecessary modules that increase start up time
     (setq org-modules nil)
+    (setq org-startup-folded nil)
+    (setq org-indent-mode-turns-on-hiding-stars nil)
     (add-hook 'org-mode-hook 'org-indent-mode)
     ;; (delight 'org-indent-mode "" 'org-indent)
     (setq org-edit-src-content-indentation 3)
@@ -157,6 +162,14 @@
   :ensure nil           ;; Local package in `/lisp' directory
   :config
   (move-lines-binding)
+  )
+
+(use-package multiple-cursors
+  :ensure t
+  :bind (("C-S-c C-S-c" . mc/edit-lines)
+         ("C->" . mc/mark-next-like-this)
+         ("C-<" . mc/mark-previous-like-this)
+         ("C-c C-<" . 'mc/mark-all-like-this))
   )
 
 (use-package ivy
@@ -204,7 +217,9 @@
          ("C-r" . swiper))
   :config
   ;; Disable counsel-M-x to start with "^"
+  ;; Put it here to make sure both ivy+counsel are loaded before setting values
   (setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
+  (setcdr (assoc 'counsel-describe-symbol ivy-initial-inputs-alist) "")
   )
 
 (use-package company
