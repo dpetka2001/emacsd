@@ -24,6 +24,7 @@
   :ensure t)
 
 ;; Set default dir and custom file
+;; Take into consideration if OS is Windows or Linux
 (if (eq system-type 'windows-nt)
     (progn 
       (setq default-directory     "C:/Users/jrn23/AppData/Roaming/.emacs.d/")
@@ -43,7 +44,6 @@
 ;; Don't show initial screen
 (setq inhibit-startup-screen t)
 
-;; Save session/buffers
 ;; Enable desktop-save-mode only when the first frame has come up.
 ;; This prevents Emacs from stalling when run as a daemon.
 (add-hook 'server-after-make-frame-hook
@@ -54,7 +54,10 @@
        (if (daemonp) (setq desktop-restore-frames nil))
        (desktop-read)
        ;; Load theme here as well for when emacs is started as daemon
-       (load-theme #'abyss t)
+       (load-theme 'dracula t)
+       ;; Change show-paren-match face because `dracula' theme sets its own
+       (set-face-attribute 'show-paren-match nil :weight 'bold
+                           :foreground "white" :background "red")
          )
        )
      )
@@ -62,6 +65,12 @@
 ;; show line numbers
 (global-linum-mode t)
 (column-number-mode t)
+(global-hl-line-mode t)
+(use-package hlinum
+  :ensure t
+  :config
+  (hlinum-activate)
+  )
 
 ;; You won't need any of the bar thingies,
 ;; turn it off to save screen estate
@@ -82,11 +91,22 @@
 (when (display-graphic-p)
   (use-package abyss-theme
     :ensure t
+    :defer t
     :config
-    (load-theme #'abyss t)
+    ;;(load-theme 'abyss t)
     )
   (use-package color-theme-modern
-    :ensure t)
+    :ensure t
+    :defer t
+    )
+  (use-package dracula-theme
+    :ensure t
+    :config
+    (load-theme 'dracula t)
+    ;; Change show-paren-match face because `dracula' theme sets its own
+    (set-face-attribute 'show-paren-match nil :weight 'bold
+                        :foreground "white" :background "red")
+    )
   )
 
 ;; Modelines
@@ -142,8 +162,8 @@
     ;; Set the value to `nil', so that org does not load unnecessary modules that increase start up time
     (setq org-modules nil)
     (setq org-startup-folded nil)
-    (setq org-indent-mode-turns-on-hiding-stars nil)
     (add-hook 'org-mode-hook 'org-indent-mode)
+    (setq org-indent-mode-turns-on-hiding-stars nil)
     ;; (delight 'org-indent-mode "" 'org-indent)
     (setq org-edit-src-content-indentation 3)
     (setq org-src-window-setup 'split-window-below)
@@ -154,7 +174,6 @@
             `(lambda (c)
                (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c)))))
     )
-
   )
 
 ;; Package to move around lines/regions
@@ -200,6 +219,8 @@
   :ensure t
   :delight
   :after ivy
+  :bind
+  ("C-c g" . counsel-outline)
   :config
   (counsel-mode)
   ;; Disable `describe-bindings' remap
@@ -216,7 +237,7 @@
   :bind (("C-s" . swiper)
          ("C-r" . swiper))
   :config
-  ;; Disable counsel-M-x to start with "^"
+  ;; Disable `counsel-M-x' and `describe-symbol-functions' to start with "^"
   ;; Put it here to make sure both ivy+counsel are loaded before setting values
   (setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
   (setcdr (assoc 'counsel-describe-symbol ivy-initial-inputs-alist) "")
@@ -228,12 +249,13 @@
   ;;:delight
   :custom
   (company-begin-commands '(self-insert-command))
-  (company-idle-delay 0)
+  (company-idle-delay .1)
   (company-minimum-prefix-length 2)
   (company-show-numbers t)
   (company-tooltip-align-annotations 't)
   ;; Disable company-mode from running in ivy-mode and window-number-mode
   (company-global-modes '(not ivy-mode window-number-mode))
+  (global-company-mode 1)
   )
 
 ;; A company front-end with icons
@@ -244,10 +266,51 @@
   :hook (company-mode . company-box-mode)
   )
 
+(use-package yasnippet
+  :ensure t
+  :hook (org-mode . yas-minor-mode)
+  :config
+  (yas-reload-all)
+  (add-hook 'prog-mode-hook #'yas-minor-mode)
+  (use-package yasnippet-snippets
+    :ensure t
+    :after yasnippet)
+  )
+
+(use-package doremi
+  :ensure nil
+  :commands
+  (doremi-prefix doremi-window-height+ doremi-window-width+)
+  :config
+  (use-package doremi-cmd
+    :ensure nil
+    :after doremi
+    :config
+    (defalias 'doremi-prefix (make-sparse-keymap))
+    (defvar doremi-map (symbol-function 'doremi-prefix)
+      "Keymap for Do Re Mi commands.")
+    (define-key global-map "\C-xt" 'doremi-prefix)
+    (define-key doremi-map "h" 'doremi-window-height+)
+    (define-key doremi-map "w" 'doremi-window-width+)
+    )
+  )
+
+(use-package rfc-mode
+  :ensure t
+  :defer t
+  :custom
+  (rfc-mode-directory (expand-file-name "~/.emacs.d/rfc"))
+  )
+
+(use-package esup
+  :ensure t
+  :defer t
+  )
+
 (use-package magit
   :ensure t
   :bind (("C-x g s" . magit-status)
-         ("C-x g m" . magit-branch-manager))
+         ("C-x g m" . magit-branch))
   :config
   (set-default 'magit-stage-all-confirm nil)
   (add-hook 'magit-mode-hook 'magit-load-config-extensions)
