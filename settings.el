@@ -23,6 +23,45 @@
 (use-package delight
   :ensure t)
 
+(setq-default
+ inhibit-startup-screen t 					; Disable start up screen
+ tab-always-indent nil						; Don't always indent to allow `TAB' character insertion
+ indent-tabs-mode nil						; Stop using tabs to indent, instead prefer spaces
+ tab-width 4				    				; Set width for tabs
+ fill-column 80				    			; Set width for automatic line breaks
+ help-window-select t 						; Focus new help windows when opened
+ select-enable-clipboard t 					; Merge system's and Emacs' clipboard
+ scroll-conservatively 101      				; Scroll by just enough for point to be visible instead of recentering
+ size-indication-mode t)         			; Show the file size in mode line                              		
+(delete-selection-mode 1)       				; Replace region when inserting text
+(blink-cursor-mode 0)           				; Set the cursor still
+(defalias 'yes-or-no-p 'y-or-n-p)        	; Replace yes/no with y/n
+(defalias 'eb 'eval-buffer)              	; Set alias for `eval-buffer'
+(defalias 'lp 'package-list-packages)    	; Set alias for `list-packages'
+(line-number-mode 1)                         ; Show line number
+(column-number-mode 1)          				; Show column number
+(global-hl-line-mode)           				; Highlight current line
+(show-paren-mode 1)             				; Show the parent
+(electric-pair-mode 1)          				; Enable pairing of parentheses, braces etc
+(use-package hlinum             				; Enable highlighting number of current line
+  :ensure t                     				
+  :config                       				
+  (hlinum-activate))                 		           		
+(if (fboundp 'scroll-bar-mode)  				; You won't need any of the bar thingies,
+    (scroll-bar-mode -1))       				; turn it off to save screen estate
+(if (fboundp 'tool-bar-mode)                 
+    (tool-bar-mode -1))                      
+(put 'downcase-region 'disabled nil)         ; Enable downcase-region
+(put 'upcase-region 'disabled nil)           ; Enable upcase-region
+(set-default-coding-systems 'utf-8)          ; Default to utf-8 encoding
+(defvar xdg-data                             ; Set xdg-data variable
+  "c:/Users/jrn23/AppData/Roaming/")
+(add-to-list 'bdf-directory-list             ; Set `bdf-directory-list' for emacs to be able to find fonts
+   "C:\\Users\\jrn23\\AppData\\Local\\Microsoft\\Windows\\Fonts")
+(set-face-attribute 'default nil 
+   :font "Inconsolata Regular"
+   :height 120)                               ; Set default font
+
 ;; Set default dir and custom file
 ;; Take into consideration if OS is Windows or Linux
 (if (eq system-type 'windows-nt)
@@ -41,9 +80,7 @@
 ;; Dirs for local package install
 (add-to-list 'load-path (concat user-emacs-directory "lisp/"))
 
-;; Don't show initial screen
-(setq inhibit-startup-screen t)
-
+;; Put code here to be run when first frame is loaded cus emacs is run as daemon
 ;; Enable desktop-save-mode only when the first frame has come up.
 ;; This prevents Emacs from stalling when run as a daemon.
 (add-hook 'server-after-make-frame-hook
@@ -58,34 +95,16 @@
        ;; Change show-paren-match face because `dracula' theme sets its own
        (set-face-attribute 'show-paren-match nil :weight 'bold
                            :foreground "white" :background "red")
+       ;; Set `bdf-directory-list' for emacs to be able to find fonts
+       (add-to-list 'bdf-directory-list            
+                    "C:\\Users\\jrn23\\AppData\\Local\\Microsoft\\Windows\\Fonts")
+       ;; Set default font
+       (set-face-attribute 'default nil             
+          :font "Inconsolata Regular"               
+          :height 120)
          )
        )
      )
-
-;; show line numbers
-(global-linum-mode t)
-(column-number-mode t)
-(global-hl-line-mode t)
-(use-package hlinum
-  :ensure t
-  :config
-  (hlinum-activate)
-  )
-
-;; You won't need any of the bar thingies,
-;; turn it off to save screen estate
-(if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
-(if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
-
-(setq scroll-margin 0
-      scroll-conservatively 100000
-      scroll-preserve-screen-position 1)
-
-;; The blinking cursor is nothing, but an annoyance
-(blink-cursor-mode -1)
-
-;; Set the file size indication to true
-(size-indication-mode t)
 
 ;; Themes configuration
 (when (display-graphic-p)
@@ -95,10 +114,6 @@
     :config
     ;;(load-theme 'abyss t)
     )
-  (use-package color-theme-modern
-    :ensure t
-    :defer t
-    )
   (use-package dracula-theme
     :ensure t
     :config
@@ -107,17 +122,40 @@
     (set-face-attribute 'show-paren-match nil :weight 'bold
                         :foreground "white" :background "red")
     )
+  (use-package doom-themes
+    :ensure t
+    :defer t
+    :config
+    (load-theme 'doom-nord t))
   )
 
 ;; Modelines
 (use-package powerline
   :ensure t
+  :defer t
   :config
   (powerline-center-theme)
   )
 
-(show-paren-mode 1)
-(electric-pair-mode 1)
+(use-package doom-modeline
+  :ensure t
+  :defer 0.1
+  :hook (after-init . doom-modeline-mode)
+  :custom
+  (doom-modeline-project-detection 'project)
+  (doom-modeline-icon t)
+  (doom-modeline-major-mode-icon t)
+  (doom-modeline-major-mode-color-icon t)
+  (doom-modeline-minor-modes t)
+  :config
+  (use-package all-the-icons
+    :ensure t
+    :if (display-graphic-p)
+    :config
+    (unless (find-font (font-spec :name "all-the-icons"))
+      (all-the-icons-install-fonts t))
+    )
+  )
 
 ;; Number keys to open file lists
 (recentf-mode 1)
@@ -134,11 +172,6 @@
   ;; :config
   ;; (window-number-mode 1)
   )
-
-;; y or n is enough
-(defalias 'yes-or-no-p 'y-or-n-p)
-(defalias 'eb 'eval-buffer)
-(defalias 'lp 'package-list-packages)
 
 (use-package helpful
   :ensure t
@@ -167,6 +200,7 @@
     ;; (delight 'org-indent-mode "" 'org-indent)
     (setq org-edit-src-content-indentation 3)
     (setq org-src-window-setup 'split-window-below)
+    (setq org-src-tab-acts-natively t)
     ;; Disable symbol's `<' pairing for electric pairing in org mode locally
     (add-hook 'org-mode-hook
     (lambda ()
@@ -174,7 +208,9 @@
             `(lambda (c)
                (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c)))))
     )
-  )
+    (add-hook 'org-mode-hook #'auto-fill-mode)
+    (add-hook 'org-src-mode-hook #'auto-fill-mode)
+ )
 
 ;; Package to move around lines/regions
 (use-package move-lines
